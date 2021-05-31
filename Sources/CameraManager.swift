@@ -8,7 +8,6 @@
 
 import AVFoundation
 import CoreImage
-import CoreLocation
 import CoreMotion
 import ImageIO
 import MobileCoreServices
@@ -238,18 +237,6 @@ open class CameraManager: NSObject, AVCaptureFileOutputRecordingDelegate, UIGest
      */
     open var animateShutter: Bool = true
     
-    /**
-     Property to enable or disable location services. Location services in camera is used for EXIF data.
-     - note: Default value is **false**
-     */
-    open var shouldUseLocationServices: Bool = false {
-        didSet {
-            if shouldUseLocationServices {
-                self.locationManager = CameraLocationManager()
-            }
-        }
-    }
-    
     /// Property to change camera device between front and back.
     open var cameraDevice: CameraDevice = .back {
         didSet {
@@ -335,8 +322,6 @@ open class CameraManager: NSObject, AVCaptureFileOutputRecordingDelegate, UIGest
     }
     
     // MARK: - Private properties
-    
-    fileprivate var locationManager: CameraLocationManager?
     
     fileprivate weak var embeddingView: UIView?
     fileprivate var videoCompletion: ((_ videoURL: URL?, _ error: NSError?) -> Void)?
@@ -585,15 +570,6 @@ open class CameraManager: NSObject, AVCaptureFileOutputRecordingDelegate, UIGest
         imageCompletion(CaptureResult(newImageData))
     }
     
-    fileprivate func _setVideoWithGPS(forLocation location: CLLocation) {
-        let metadata = AVMutableMetadataItem()
-        metadata.keySpace = AVMetadataKeySpace.quickTimeMetadata
-        metadata.key = AVMetadataKey.quickTimeMetadataKeyLocationISO6709 as NSString
-        metadata.identifier = AVMetadataIdentifier.quickTimeMetadataLocationISO6709
-        metadata.value = String(format: "%+09.5f%+010.5f%+.0fCRSWGS_84", location.coordinate.latitude, location.coordinate.longitude, location.altitude) as NSString
-        _getMovieOutput().metadata = [metadata]
-    }
-    
     fileprivate func _imageDataWithEXIF(forImage _: UIImage, _ data: Data) -> NSData? {
         let cfdata: CFData = data as CFData
         let source = CGImageSourceCreateWithData(cfdata, nil)!
@@ -606,47 +582,16 @@ open class CameraManager: NSObject, AVCaptureFileOutputRecordingDelegate, UIGest
         
         var mutableMetadata = CGImageMetadataCreateMutableCopy(imageProperties)!
         
-        if let location = locationManager?.latestLocation {
-            mutableMetadata = _gpsMetadata(mutableMetadata, withLocation: location)
-        }
-        
         let finalMetadata: CGImageMetadata = mutableMetadata
         CGImageDestinationAddImageAndMetadata(destination, UIImage(data: data)!.cgImage!, finalMetadata, nil)
         CGImageDestinationFinalize(destination)
         return mutableData
     }
     
-    fileprivate func _gpsMetadata(_ imageMetadata: CGMutableImageMetadata, withLocation location: CLLocation) -> CGMutableImageMetadata {
-        let altitudeRef = Int(location.altitude < 0.0 ? 1 : 0)
-        let latitudeRef = location.coordinate.latitude < 0.0 ? "S" : "N"
-        let longitudeRef = location.coordinate.longitude < 0.0 ? "W" : "E"
-        
-        let f = DateFormatter()
-        f.timeZone = TimeZone(abbreviation: "UTC")
-        
-        f.dateFormat = "yyyy:MM:dd"
-        let isoDate = f.string(from: location.timestamp)
-        
-        f.dateFormat = "HH:mm:ss.SSSSSS"
-        let isoTime = f.string(from: location.timestamp)
-        
-        CGImageMetadataSetValueMatchingImageProperty(imageMetadata, kCGImagePropertyGPSDictionary, kCGImagePropertyGPSLatitudeRef, latitudeRef as CFTypeRef)
-        CGImageMetadataSetValueMatchingImageProperty(imageMetadata, kCGImagePropertyGPSDictionary, kCGImagePropertyGPSLatitude, abs(location.coordinate.latitude) as CFTypeRef)
-        CGImageMetadataSetValueMatchingImageProperty(imageMetadata, kCGImagePropertyGPSDictionary, kCGImagePropertyGPSLongitudeRef, longitudeRef as CFTypeRef)
-        CGImageMetadataSetValueMatchingImageProperty(imageMetadata, kCGImagePropertyGPSDictionary, kCGImagePropertyGPSLongitude, abs(location.coordinate.longitude) as CFTypeRef)
-        CGImageMetadataSetValueMatchingImageProperty(imageMetadata, kCGImagePropertyGPSDictionary, kCGImagePropertyGPSAltitude, Int(abs(location.altitude)) as CFTypeRef)
-        CGImageMetadataSetValueMatchingImageProperty(imageMetadata, kCGImagePropertyGPSDictionary, kCGImagePropertyGPSAltitudeRef, altitudeRef as CFTypeRef)
-        CGImageMetadataSetValueMatchingImageProperty(imageMetadata, kCGImagePropertyGPSDictionary, kCGImagePropertyGPSTimeStamp, isoTime as CFTypeRef)
-        CGImageMetadataSetValueMatchingImageProperty(imageMetadata, kCGImagePropertyGPSDictionary, kCGImagePropertyGPSDateStamp, isoDate as CFTypeRef)
-        
-        return imageMetadata
-    }
-    
     fileprivate func _saveImageToLibrary(atFileURL filePath: URL, _ imageCompletion: @escaping (CaptureResult) -> Void) {
-        let location = locationManager?.latestLocation
         let date = Date()
         
-        library?.save(imageAtURL: filePath, albumName: imageAlbumName, date: date, location: location) { asset in
+        library?.save(imageAtURL: filePath, albumName: imageAlbumName, date: date) { asset in
             
             guard let _ = asset else {
                 return imageCompletion(.failure(CaptureError.assetNotSaved))
@@ -747,28 +692,6 @@ open class CameraManager: NSObject, AVCaptureFileOutputRecordingDelegate, UIGest
         }
     
         let videoOutput = _getMovieOutput()
-        
-        if shouldUseLocationServices {
-            
-            let specs = [kCMMetadataFormatDescriptionMetadataSpecificationKey_Identifier as String: AVMetadataIdentifier.quickTimeMetadataLocationISO6709,
-                         kCMMetadataFormatDescriptionMetadataSpecificationKey_DataType as String: kCMMetadataDataType_QuickTimeMetadataLocation_ISO6709 as String] as [String: Any]
-            
-            var locationMetadataDesc: CMFormatDescription?
-            CMMetadataFormatDescriptionCreateWithMetadataSpecifications(allocator: kCFAllocatorDefault, metadataType: kCMMetadataFormatType_Boxed, metadataSpecifications: [specs] as CFArray, formatDescriptionOut: &locationMetadataDesc)
-            
-            // Create the metadata input and add it to the session.
-            guard let captureSession = captureSession, let locationMetadata = locationMetadataDesc else {
-                return
-            }
-            
-            let newLocationMetadataInput = AVCaptureMetadataInput(formatDescription: locationMetadata, clock: CMClockGetHostTimeClock())
-            captureSession.addInputWithNoConnections(newLocationMetadataInput)
-            
-            // Connect the location metadata input to the movie file output.
-            let inputPort = newLocationMetadataInput.ports[0]
-            captureSession.addConnection(AVCaptureConnection(inputPorts: [inputPort], output: videoOutput))
-            
-        }
 
         _updateIlluminationMode(flashMode)
         
@@ -908,10 +831,9 @@ open class CameraManager: NSObject, AVCaptureFileOutputRecordingDelegate, UIGest
     }
     
     fileprivate func _saveVideoToLibrary(_ fileURL: URL) {
-        let location = locationManager?.latestLocation
         let date = Date()
         
-        library?.save(videoAtURL: fileURL, albumName: videoAlbumName, date: date, location: location, completion: { _ in
+        library?.save(videoAtURL: fileURL, albumName: videoAlbumName, date: date, completion: { _ in
             self._executeVideoCompletionWithURL(fileURL, error: nil)
         })
     }
@@ -1307,9 +1229,6 @@ open class CameraManager: NSObject, AVCaptureFileOutputRecordingDelegate, UIGest
                 currentConnection = stillImageOutput?.connection(with: AVMediaType.video)
             case .videoOnly, .videoWithMic:
                 currentConnection = _getMovieOutput().connection(with: AVMediaType.video)
-                if let location = locationManager?.latestLocation {
-                    _setVideoWithGPS(forLocation: location)
-            }
         }
         
         if let validPreviewLayer = previewLayer {
@@ -1681,45 +1600,6 @@ open class CameraManager: NSObject, AVCaptureFileOutputRecordingDelegate, UIGest
         }
     }
     
-    // MARK: - CameraLocationManager()
-    
-    public class CameraLocationManager: NSObject, CLLocationManagerDelegate {
-        var locationManager = CLLocationManager()
-        var latestLocation: CLLocation?
-        
-        override init() {
-            super.init()
-            locationManager.delegate = self
-            locationManager.requestWhenInUseAuthorization()
-            locationManager.distanceFilter = kCLDistanceFilterNone
-            locationManager.headingFilter = 5.0
-            locationManager.desiredAccuracy = kCLLocationAccuracyBest
-        }
-        
-        func startUpdatingLocation() {
-            locationManager.startUpdatingLocation()
-        }
-        
-        func stopUpdatingLocation() {
-            locationManager.stopUpdatingLocation()
-        }
-        
-        // MARK: - CLLocationManagerDelegate
-        
-        public func locationManager(_: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-            // Pick the location with best (= smallest value) horizontal accuracy
-            latestLocation = locations.sorted { $0.horizontalAccuracy < $1.horizontalAccuracy }.first
-        }
-        
-        public func locationManager(_: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
-            if status == .authorizedAlways || status == .authorizedWhenInUse {
-                locationManager.startUpdatingLocation()
-            } else {
-                locationManager.stopUpdatingLocation()
-            }
-        }
-    }
-    
     // Determining whether the current device actually supports blurring
     // As seen on: http://stackoverflow.com/a/29997626/2269387
     fileprivate class func _blurSupported() -> Bool {
@@ -1968,14 +1848,14 @@ extension PHPhotoLibrary {
         }
     }
     
-    func save(imageAtURL: URL, albumName: String?, date: Date = Date(), location: CLLocation? = nil, completion: ((PHAsset?) -> Void)? = nil) {
+    func save(imageAtURL: URL, albumName: String?, date: Date = Date(), completion: ((PHAsset?) -> Void)? = nil) {
         func save() {
             if let albumName = albumName {
                 getAlbum(name: albumName) { album in
-                    self.saveImage(imageAtURL: imageAtURL, album: album, date: date, location: location, completion: completion)
+                    self.saveImage(imageAtURL: imageAtURL, album: album, date: date, completion: completion)
                 }
             } else {
-                saveImage(imageAtURL: imageAtURL, album: nil, date: date, location: location, completion: completion)
+                saveImage(imageAtURL: imageAtURL, album: nil, date: date, completion: completion)
             }
         }
         
@@ -1990,14 +1870,14 @@ extension PHPhotoLibrary {
         }
     }
     
-    func save(videoAtURL: URL, albumName: String?, date: Date = Date(), location: CLLocation? = nil, completion: ((PHAsset?) -> Void)? = nil) {
+    func save(videoAtURL: URL, albumName: String?, date: Date = Date(), completion: ((PHAsset?) -> Void)? = nil) {
         func save() {
             if let albumName = albumName {
                 getAlbum(name: albumName) { album in
-                    self.saveVideo(videoAtURL: videoAtURL, album: album, date: date, location: location, completion: completion)
+                    self.saveVideo(videoAtURL: videoAtURL, album: album, date: date, completion: completion)
                 }
             } else {
-                saveVideo(videoAtURL: videoAtURL, album: nil, date: date, location: location, completion: completion)
+                saveVideo(videoAtURL: videoAtURL, album: nil, date: date, completion: completion)
             }
         }
         
@@ -2036,12 +1916,11 @@ extension PHPhotoLibrary {
         })
     }
     
-    fileprivate func saveImage(imageAtURL: URL, album: PHAssetCollection?, date: Date = Date(), location: CLLocation? = nil, completion: ((PHAsset?) -> Void)? = nil) {
+    fileprivate func saveImage(imageAtURL: URL, album: PHAssetCollection?, date: Date = Date(), completion: ((PHAsset?) -> Void)? = nil) {
         var placeholder: PHObjectPlaceholder?
         performChanges({
             let createAssetRequest = PHAssetChangeRequest.creationRequestForAssetFromImage(atFileURL: imageAtURL)!
             createAssetRequest.creationDate = date
-            createAssetRequest.location = location
             if let album = album {
                 guard let albumChangeRequest = PHAssetCollectionChangeRequest(for: album),
                     let photoPlaceholder = createAssetRequest.placeholderForCreatedAsset else { return }
@@ -2062,12 +1941,11 @@ extension PHPhotoLibrary {
         })
     }
     
-    fileprivate func saveVideo(videoAtURL: URL, album: PHAssetCollection?, date: Date = Date(), location: CLLocation? = nil, completion: ((PHAsset?) -> Void)? = nil) {
+    fileprivate func saveVideo(videoAtURL: URL, album: PHAssetCollection?, date: Date = Date(), completion: ((PHAsset?) -> Void)? = nil) {
         var placeholder: PHObjectPlaceholder?
         performChanges({
             let createAssetRequest = PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: videoAtURL)!
             createAssetRequest.creationDate = date
-            createAssetRequest.location = location
             if let album = album {
                 guard let albumChangeRequest = PHAssetCollectionChangeRequest(for: album),
                     let photoPlaceholder = createAssetRequest.placeholderForCreatedAsset else { return }

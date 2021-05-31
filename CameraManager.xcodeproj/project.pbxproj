@@ -8,12 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		02A8524E2433A7BC001F560A /* CameraManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 454C1F6619E8316A00C81915 /* CameraManager.swift */; };
-		454C1F4719E82E2500C81915 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 454C1F4619E82E2500C81915 /* AppDelegate.swift */; };
-		454C1F4919E82E2500C81915 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 454C1F4819E82E2500C81915 /* ViewController.swift */; };
-		454C1F4C19E82E2500C81915 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 454C1F4A19E82E2500C81915 /* Main.storyboard */; };
-		454C1F4E19E82E2500C81915 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 454C1F4D19E82E2500C81915 /* Images.xcassets */; };
-		454C1F5119E82E2500C81915 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 454C1F4F19E82E2500C81915 /* LaunchScreen.xib */; };
-		45A23C181A656BDC00FB48F3 /* ImageViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45A23C171A656BDC00FB48F3 /* ImageViewController.swift */; };
 		D71DE8861AD677A7001E62F1 /* CameraManager.h in Headers */ = {isa = PBXBuildFile; fileRef = D71DE8851AD677A7001E62F1 /* CameraManager.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		D71DE8981AD677A8001E62F1 /* CameraManager.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D71DE8811AD677A7001E62F1 /* CameraManager.framework */; };
 		D71DE8991AD677A8001E62F1 /* CameraManager.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = D71DE8811AD677A7001E62F1 /* CameraManager.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -45,14 +39,7 @@
 
 /* Begin PBXFileReference section */
 		454C1F4119E82E2500C81915 /* camera.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = camera.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		454C1F4519E82E2500C81915 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		454C1F4619E82E2500C81915 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		454C1F4819E82E2500C81915 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
-		454C1F4B19E82E2500C81915 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
-		454C1F4D19E82E2500C81915 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
-		454C1F5019E82E2500C81915 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/LaunchScreen.xib; sourceTree = "<group>"; };
 		454C1F6619E8316A00C81915 /* CameraManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CameraManager.swift; sourceTree = "<group>"; };
-		45A23C171A656BDC00FB48F3 /* ImageViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ImageViewController.swift; sourceTree = "<group>"; };
 		D71DE8811AD677A7001E62F1 /* CameraManager.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = CameraManager.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		D71DE8841AD677A7001E62F1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		D71DE8851AD677A7001E62F1 /* CameraManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CameraManager.h; sourceTree = "<group>"; };
@@ -80,7 +67,6 @@
 		454C1F3819E82E2500C81915 = {
 			isa = PBXGroup;
 			children = (
-				454C1F4319E82E2500C81915 /* Example App */,
 				D71DE8821AD677A7001E62F1 /* Sources */,
 				454C1F4219E82E2500C81915 /* Products */,
 			);
@@ -93,28 +79,6 @@
 				D71DE8811AD677A7001E62F1 /* CameraManager.framework */,
 			);
 			name = Products;
-			sourceTree = "<group>";
-		};
-		454C1F4319E82E2500C81915 /* Example App */ = {
-			isa = PBXGroup;
-			children = (
-				454C1F4619E82E2500C81915 /* AppDelegate.swift */,
-				454C1F4819E82E2500C81915 /* ViewController.swift */,
-				45A23C171A656BDC00FB48F3 /* ImageViewController.swift */,
-				454C1F4D19E82E2500C81915 /* Images.xcassets */,
-				454C1F4F19E82E2500C81915 /* LaunchScreen.xib */,
-				454C1F4A19E82E2500C81915 /* Main.storyboard */,
-				454C1F4419E82E2500C81915 /* Supporting Files */,
-			);
-			path = "Example App";
-			sourceTree = "<group>";
-		};
-		454C1F4419E82E2500C81915 /* Supporting Files */ = {
-			isa = PBXGroup;
-			children = (
-				454C1F4519E82E2500C81915 /* Info.plist */,
-			);
-			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
 		D71DE8821AD677A7001E62F1 /* Sources */ = {
@@ -232,9 +196,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				454C1F4C19E82E2500C81915 /* Main.storyboard in Resources */,
-				454C1F5119E82E2500C81915 /* LaunchScreen.xib in Resources */,
-				454C1F4E19E82E2500C81915 /* Images.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -252,9 +213,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				454C1F4919E82E2500C81915 /* ViewController.swift in Sources */,
-				45A23C181A656BDC00FB48F3 /* ImageViewController.swift in Sources */,
-				454C1F4719E82E2500C81915 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -275,25 +233,6 @@
 			targetProxy = D71DE8961AD677A8001E62F1 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
-
-/* Begin PBXVariantGroup section */
-		454C1F4A19E82E2500C81915 /* Main.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				454C1F4B19E82E2500C81915 /* Base */,
-			);
-			name = Main.storyboard;
-			sourceTree = "<group>";
-		};
-		454C1F4F19E82E2500C81915 /* LaunchScreen.xib */ = {
-			isa = PBXVariantGroup;
-			children = (
-				454C1F5019E82E2500C81915 /* Base */,
-			);
-			name = LaunchScreen.xib;
-			sourceTree = "<group>";
-		};
-/* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
 		454C1F5E19E82E2500C81915 /* Debug */ = {
